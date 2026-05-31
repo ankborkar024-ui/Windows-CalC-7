@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en" spellcheck="false">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Window Calc">
+<title>Ankit Window Calc</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- =====================================================
+  HOW TO CUSTOMIZE THIS FILE
+  -------------------------------------------------------
+  1. COLORS     → Change in the :root { } section below
+  2. APP TEXT   → Change in the "APP TEXT" section below
+  3. FORMULAS   → Change in the "FORMULAS" section in JS
+  4. SP BUTTONS → SP values are fixed (0 to 8 in steps of ½)
+  ===================================================== -->
+
+<style>
+
+/* =====================================================
+   1. COLORS — change any color here
+   ===================================================== */
+:root {
+  --primary   : #6B7040;   /* main color  — buttons, headers, titles   */
+  --secondary : #A89F6B;   /* accent color — underlines, badges         */
+  --bg        : #F5F0E8;   /* page background color                     */
+  --card      : #FDFCFA;   /* card / white box background               */
+  --light     : #EDE8DC;   /* borders and divider lines                 */
+  --text      : #4A4D2A;   /* main text color                           */
+  --gray      : #7A7A6A;   /* secondary / label text color              */
+}
+
+/* =====================================================
+   2. BASE STYLES — no need to change these
+   ===================================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
+
+/* Header */
+.header { background: var(--primary); padding: 50px 16px 18px; text-align: center; }
+.header h1 { color: #fff; font-size: 22px; letter-spacing: 1px; }
+.header p  { color: #D4C9A8; font-size: 12px; margin-top: 4px; }
+
+/* Card */
+.card { background: var(--card); border-radius: 16px; margin: 14px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+.card-title { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;
+  padding-bottom: 10px; border-bottom: 2px solid var(--secondary); margin-bottom: 14px; }
+
+/* Track selector buttons */
+.track-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.track-btn { padding: 14px; border: 2px solid var(--light); border-radius: 12px; background: var(--bg);
+  font-size: 14px; font-weight: 700; color: var(--gray); cursor: pointer; text-align: center; transition: all 0.2s; }
+.track-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.track-btn .tb-sub { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 3px; }
+
+/* Input rows */
+.inp-row { display: grid; grid-template-columns: 1fr 110px; gap: 10px; margin-bottom: 10px; align-items: end; }
+label { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 5px; }
+input[type=number] { width: 100%; padding: 13px; border: 2px solid var(--light); border-radius: 10px;
+  font-size: 24px; font-weight: 700; color: var(--text); background: var(--bg);
+  outline: none; text-align: center; -webkit-appearance: none; }
+input[type=number]:focus { border-color: var(--primary); }
+
+/* SP display box (the green box showing selected SP value) */
+.sp-display { padding: 13px 10px; border: 2px solid var(--primary); border-radius: 10px;
+  font-size: 20px; font-weight: 700; color: #fff; background: var(--primary);
+  text-align: center; cursor: pointer; min-width: 90px; line-height: 1.2; }
+
+/* SP grid buttons */
+.sp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 6px; }
+.sp-btn { padding: 10px 2px; border: 2px solid var(--light); border-radius: 8px; background: var(--bg);
+  font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; text-align: center; transition: all 0.15s; }
+.sp-btn.on      { background: var(--secondary); border-color: var(--secondary); color: #fff; }
+.sp-btn.on.zero { background: var(--primary);   border-color: var(--primary); }
+
+/* SP grid label and hint */
+.sp-active-lbl { font-size: 11px; font-weight: 700; color: var(--primary); text-align: center;
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sp-hint { font-size: 10px; color: var(--gray); text-align: center; margin: 4px 0 10px; }
+
+/* Buttons */
+.calc-btn  { width: 100%; padding: 15px; background: var(--primary); color: #fff; border: none;
+  border-radius: 12px; font-size: 17px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 14px; cursor: pointer; }
+.calc-btn:active { opacity: 0.85; }
+.clear-btn { width: 100%; padding: 11px; background: transparent; color: var(--gray);
+  border: 2px solid var(--light); border-radius: 12px; font-size: 14px; margin-top: 8px; cursor: pointer; }
+
+/* Results section */
+.results      { display: none; }
+.results.show { display: block; }
+
+/* Summary bar */
+.summary { background: var(--primary); border-radius: 14px; margin: 0 14px 2px;
+  padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+.summary .lbl { font-size: 10px; color: #D4C9A8; }
+.summary .val { font-size: 16px; font-weight: 700; color: #fff; }
+.summary .sep { width: 1px; height: 36px; background: rgba(255,255,255,0.2); }
+
+/* View toggle (Profile List / Final Size) */
+.view-toggle { display: flex; gap: 0; margin: 12px 14px 0; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary); }
+.view-btn { flex: 1; padding: 11px 6px; background: var(--bg); color: var(--primary); border: none;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px; }
+.view-btn.active { background: var(--primary); color: #fff; }
+
+/* Profile list card */
+#view-list      { display: none; }
+#view-list.show { display: block; }
+.list-card { background: var(--card); border-radius: 16px; margin: 10px 14px; padding: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08); overflow: hidden; }
+.list-section-hdr { display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #fff; }
+.list-section-hdr .icon  { font-size: 16px; }
+.list-section-hdr .title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+.list-section-hdr .count { font-size: 10px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+.profile-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--light); gap: 10px; }
+.profile-row:last-child { border-bottom: none; }
+.profile-color  { width: 10px; height: 36px; border-radius: 3px; flex-shrink: 0; }
+.profile-info   { flex: 1; }
+.profile-name    { font-size: 13px; font-weight: 700; color: var(--text); }
+.profile-formula { font-size: 10px; color: var(--gray); margin-top: 1px; }
+.profile-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.profile-size   { font-size: 16px; font-weight: 800; color: var(--primary); }
+.profile-qty    { font-size: 10px; font-weight: 700; color: var(--card); background: var(--secondary); padding: 2px 8px; border-radius: 20px; }
+
+/* Download buttons */
+.dl-btn  { width: calc(100% - 28px); margin: 10px 14px; padding: 13px; background: var(--secondary);
+  color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.dl-btn:active  { opacity: 0.85; }
+.dl-btn2 { width: calc(100% - 28px); margin: 4px 14px 10px; padding: 13px; background: var(--primary);
+  color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.dl-btn2:active { opacity: 0.85; }
+
+/* Final size table */
+#view-diagram      { display: none; }
+#view-diagram.show { display: block; }
+.final-size-card { background: var(--card); border-radius: 16px; margin: 10px 14px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08); overflow: hidden; }
+.fs-header { background: var(--primary); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.fs-header span { color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.fs-table { width: 100%; border-collapse: collapse; }
+.fs-table th { background: var(--light); font-size: 10px; font-weight: 700; color: var(--gray);
+  text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 14px;
+  text-align: center; border-bottom: 2px solid var(--secondary); }
+.fs-table th:first-child { text-align: left; }
+.fs-table td { padding: 13px 14px; border-bottom: 1px solid var(--light);
+  font-size: 15px; font-weight: 700; color: var(--primary); text-align: center; }
+.fs-table td:first-child { font-size: 13px; font-weight: 600; color: var(--text); text-align: left; }
+.fs-table tr:last-child td  { border-bottom: none; }
+.fs-table tr:nth-child(even) td { background: #FAFAF7; }
+.fs-x { color: var(--gray); font-size: 13px; font-weight: 400; }
+
+/* Install tip */
+.tip { margin: 14px; background: var(--text); border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+.tip p      { font-size: 11px; color: #D4C9A8; line-height: 1.6; }
+.tip strong { color: #fff; }
+
+/* ── SAVE OPTIONS PANEL ── */
+.save-panel { margin: 0 14px 4px; }
+.save-title { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 8px; padding-left: 2px; }
+.save-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.save-btn { padding: 12px 8px; border: none; border-radius: 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; text-align: center; line-height: 1.4; transition: all 0.15s; }
+.save-btn:active { opacity: 0.8; transform: scale(0.97); }
+.save-btn .sb-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+.btn-whatsapp { background: #25D366; color: #fff; }
+.btn-copy     { background: var(--secondary); color: #fff; }
+.btn-pdf      { background: #E74C3C; color: #fff; }
+.btn-history  { background: var(--primary); color: #fff; }
+
+/* ── HISTORY PANEL ── */
+.history-section { margin: 14px; }
+.history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.history-header h3 { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+.history-clear { font-size: 11px; color: var(--gray); background: none; border: 1px solid var(--light);
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.history-empty { text-align: center; padding: 20px; color: var(--gray); font-size: 13px;
+  background: var(--card); border-radius: 12px; }
+.history-item { background: var(--card); border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.history-item:active { opacity: 0.8; }
+.hi-left .hi-size { font-size: 15px; font-weight: 800; color: var(--primary); }
+.hi-left .hi-track { font-size: 10px; color: var(--gray); margin-top: 2px; }
+.hi-left .hi-time  { font-size: 10px; color: var(--gray); }
+.hi-arrow { color: var(--secondary); font-size: 18px; }
+
+/* ── PDF QUEUE ── */
+.btn-add-pdf { width: calc(100% - 28px); margin: 4px 14px; padding: 13px; border: none;
+  border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: #27AE60; color: #fff; transition: all 0.2s; }
+.btn-add-pdf.added { background: #E8F8EF; color: #27AE60; border: 2px solid #27AE60; }
+.btn-add-pdf:active { opacity: 0.85; }
+
+/* Queue panel */
+.queue-section { margin: 14px; display: none; }
+.queue-section.show { display: block; }
+.queue-header { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; }
+.queue-header h3 { font-size: 13px; font-weight: 700; color: var(--primary);
+  text-transform: uppercase; letter-spacing: 1px; }
+.queue-header .q-count { font-size: 11px; background: var(--primary); color: #fff;
+  padding: 3px 10px; border-radius: 20px; font-weight: 700; }
+.queue-empty { text-align: center; padding: 16px; color: var(--gray);
+  font-size: 13px; background: var(--card); border-radius: 12px; }
+.queue-item { background: var(--card); border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex; justify-content: space-between; align-items: center; }
+.qi-left { display: flex; align-items: center; gap: 12px; }
+.qi-num { background: var(--primary); color: #fff; font-size: 12px; font-weight: 800;
+  width: 28px; height: 28px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; }
+.qi-info .qi-size  { font-size: 15px; font-weight: 800; color: var(--primary); }
+.qi-info .qi-track { font-size: 11px; color: var(--gray); margin-top: 2px; }
+.qi-remove { background: #FADBD8; color: #E74C3C; border: none; border-radius: 8px;
+  padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.qi-remove:active { opacity: 0.8; }
+.queue-generate { width: 100%; padding: 14px; background: #E74C3C; color: #fff;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 4px; display: flex; align-items: center;
+  justify-content: center; gap: 8px; }
+.queue-generate:active { opacity: 0.85; }
+.queue-generate:disabled { background: #ccc; cursor: not-allowed; }
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text); color: #fff; padding: 12px 20px; border-radius: 30px;
+  font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s ease;
+  white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+   3. APP TEXT — change any visible text here
+   ===================================================== -->
+
+<!-- Header -->
+<div class="header">
+  <h1>🪟 ANKIT ALUMINIUM & GLASS WORKS</h1>
+  <p>Sliding Windows Size Calculator</p>
+</div>
+
+<!-- Input card -->
+<div class="card">
+  <div class="card-title">📐 Frame Size Input</div>
+
+  <!-- Track type selector -->
+  <div class="track-select">
+    <div class="track-btn active" id="btn-2track" onclick="setTrack(2)">
+      2 Track Window
+      <div class="tb-sub">2 Panels</div>
+    </div>
+    <div class="track-btn" id="btn-3track" onclick="setTrack(3)">
+      3 Track Window
+      <div class="tb-sub">3 Panels</div>
+    </div>
+  </div>
+
+  <!-- Length input -->
+  <div class="inp-row">
+    <div>
+      <label>Length (inch)</label>
+      <input type="number" id="len-in" placeholder="0" inputmode="numeric" min="0">
+    </div>
+    <div>
+      <label>Length SP</label>
+      <div class="sp-display" id="len-sp-show" onclick="setActiveDim('len')">0 </div>
+    </div>
+  </div>
+
+  <!-- Height input -->
+  <div class="inp-row">
+    <div>
+      <label>Height (inch)</label>
+      <input type="number" id="hgt-in" placeholder="0" inputmode="numeric" min="0">
+    </div>
+    <div>
+      <label>Height SP</label>
+      <div class="sp-display" id="hgt-sp-show" onclick="setActiveDim('hgt')">0 </div>
+    </div>
+  </div>
+
+  <!-- Shared SP grid -->
+  <div class="sp-active-lbl" id="sp-active-lbl">Setting: Length SP &nbsp;(1 SP = ⅛")</div>
+  <div class="sp-grid" id="shared-grid"></div>
+  <div class="sp-hint">Tap SP=Space box above to switch between Length SP / Height SP</div>
+
+  <button class="calc-btn"  onclick="calculate()">⚙️ CALCULATE</button>
+  <button class="clear-btn" onclick="clearAll()">Clear</button>
+</div>
+
+<!-- Results section -->
+<div class="results" id="results">
+
+  <!-- Summary bar -->
+  <div class="summary">
+    <div><div class="lbl">Length</div> <div class="val" id="s-len">—</div></div>
+    <div class="sep"></div>
+    <div><div class="lbl">Height</div> <div class="val" id="s-hgt">—</div></div>
+    <div class="sep"></div>
+    <div><div class="lbl">Track</div>  <div class="val" id="s-track">2T</div></div>
+    <div class="sep"></div>
+    <div><div class="lbl">Panels</div> <div class="val" id="s-panels">2</div></div>
+  </div>
+
+  <!-- View toggle -->
+  <div class="view-toggle" id="view-toggle-bar">
+    <button class="view-btn active" onclick="switchView('list')">📋 Profile List</button>
+    <button class="view-btn"        onclick="switchView('diagram')">📏 Final Size</button>
+  </div>
+
+  <!-- ── VIEW 1: PROFILE LIST ── -->
+  <div id="view-list" class="show">
+    <div class="list-card" id="list-card-all">
+
+      <!-- Frame section header -->
+      <div class="list-section-hdr" style="background: #6B7040;">
+        <span class="icon">🔩</span>
+        <span class="title">Frame Profiles</span>
+        <span class="count" id="lc-frame-count">4 pcs total</span>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#8B8E60"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="ln-track-bottom-name">2 Track Bottom</div>
+          <div class="profile-formula">= Length</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-tb">—</div>
+          <div class="profile-qty">1 pc</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#8B8E60"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="ln-track-top-name">2 Track Top</div>
+          <div class="profile-formula">= Length</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-ttl">—</div>
+          <div class="profile-qty">1 pc</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#8B8E60"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="ln-track-side-name">2 Track Side</div>
+          <div class="profile-formula">= Height</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-tth">—</div>
+          <div class="profile-qty">2 pcs</div>
+        </div>
+      </div>
+
+      <!-- Panel section header -->
+      <div class="list-section-hdr" style="background: #A89F6B;">
+        <span class="icon">🪟</span>
+        <span class="title">Panel Profiles</span>
+        <span class="count" id="lc-panel-count">× 2 panels</span>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#A89F6B"></div>
+        <div class="profile-info">
+          <div class="profile-name">Top &amp; Bottom Rail</div>
+          <div class="profile-formula" id="lf-topbot">= (Length − 6"2) ÷ 2</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-tb2">—</div>
+          <div class="profile-qty">2 pcs each</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#6B7040"></div>
+        <div class="profile-info">
+          <div class="profile-name">Handle</div>
+          <div class="profile-formula">= Height − 1"4</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-handle">—</div>
+          <div class="profile-qty">1 pc each</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#7A8A5A"></div>
+        <div class="profile-info">
+          <div class="profile-name">Interlock</div>
+          <div class="profile-formula">= Height − 1"4</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-intlk">—</div>
+          <div class="profile-qty">1 pc each</div>
+        </div>
+      </div>
+
+      <!-- Glass section header -->
+      <div class="list-section-hdr" style="background: #4A7A94;">
+        <span class="icon">🔲</span>
+        <span class="title">Glass Size</span>
+        <span class="count" id="lc-glass-count">2 pcs total</span>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#89B4C9"></div>
+        <div class="profile-info">
+          <div class="profile-name">Vertical</div>
+          <div class="profile-formula">= Handle − 2"4</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-gv">—</div>
+          <div class="profile-qty" style="background:#4A7A94">1 pc each</div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-color" style="background:#89B4C9"></div>
+        <div class="profile-info">
+          <div class="profile-name">Horizontal</div>
+          <div class="profile-formula">= Top/Bot + 0"4</div>
+        </div>
+        <div class="profile-right">
+          <div class="profile-size" id="l-gh">—</div>
+          <div class="profile-qty" style="background:#4A7A94">1 pc each</div>
+        </div>
+      </div>
+
+    </div><!-- /list-card -->
+    <button class="dl-btn" onclick="downloadList()">⬇️ Save as Image</button>
+  </div><!-- /view-list -->
+
+  <!-- ── VIEW 2: FINAL SIZE TABLE ── -->
+  <div id="view-diagram">
+    <div class="final-size-card" id="final-size-card">
+      <div class="fs-header">
+        <span>📏</span>
+        <span>Final Size Summary</span>
+      </div>
+      <table class="fs-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Horizontal</th>
+            <th></th>
+            <th>Vertical</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Frame Size</td>
+            <td id="fs-frame-h">—</td>
+            <td class="fs-x">✕</td>
+            <td id="fs-frame-v">—</td>
+          </tr>
+          <tr>
+            <td>Panel Size</td>
+            <td id="fs-panel-h">—</td>
+            <td class="fs-x">✕</td>
+            <td id="fs-panel-v">—</td>
+          </tr>
+          <tr>
+            <td>Glass Size</td>
+            <td id="fs-glass-h">—</td>
+            <td class="fs-x">✕</td>
+            <td id="fs-glass-v">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="dl-btn2" onclick="downloadFinalSize()">⬇️ Save as Image</button>
+  </div><!-- /view-diagram -->
+
+</div><!-- /results -->
+
+<!-- ── SAVE OPTIONS ── -->
+<div id="save-options" style="display:none">
+  <div class="save-panel">
+    <div class="save-title">💾 Save Results</div>
+    <div class="save-grid">
+      <button class="save-btn btn-whatsapp" onclick="shareWhatsApp()">
+        <span class="sb-icon">💬</span>WhatsApp Share
+      </button>
+      <button class="save-btn btn-copy" onclick="copyToClipboard()">
+        <span class="sb-icon">📋</span>Copy Text
+      </button>
+      <button class="save-btn btn-pdf" onclick="savePDF()">
+        <span class="sb-icon">📄</span>Save as PDF
+      </button>
+      <button class="save-btn btn-history" onclick="showHistory()">
+        <span class="sb-icon">🕒</span>View History
+      </button>
+    </div>
+  </div>
+  <!-- Add to PDF queue button -->
+  <button class="btn-add-pdf" id="btn-add-pdf" onclick="addToPdfQueue()">
+    ➕ Add to PDF Queue
+  </button>
+</div>
+
+<!-- ── PDF QUEUE PANEL ── -->
+<div class="queue-section" id="queue-section">
+  <div class="queue-header">
+    <h3>📄 PDF Queue</h3>
+    <span class="q-count" id="q-count">0 pages</span>
+  </div>
+  <div id="queue-list"></div>
+  <button class="queue-generate" id="queue-generate-btn" onclick="generateMultiPDF()" disabled>
+    🖨️ Generate PDF (0 pages)
+  </button>
+</div>
+
+<!-- ── HISTORY ── -->
+<div class="history-section" id="history-section" style="display:none">
+  <div class="history-header">
+    <h3>🕒 Calculation History</h3>
+    <button class="history-clear" onclick="clearHistory()">Clear All</button>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Install tip -->
+<div class="tip">
+  <div style="font-size:20px">📱</div>
+  <p>
+    <strong>Save as iPhone App:</strong>
+    Open in Safari → tap Share → <strong>Add to Home Screen</strong>
+  </p>
+</div>
+
+
+<script>
+
+/* =====================================================
+   4. FORMULAS & CONSTANTS
+   -------------------------------------------------------
+   Format:  inch + sp/8
+   Example: 1"4 = 1 + 4/8 = 1.5 inches
+   ===================================================== */
+
+const SP_PER_INCH = 8;   // 1 inch = 8 SP (do not change)
+
+// ── 2 TRACK formulas ──
+const C2_HANDLE  = 1 + 4/8;   // Handle & Interlock  = Height  - 1"4
+const C2_TOPBOT  = 6 + 2/8;   // Top & Bottom Rail   = (Length - 6"2) ÷ 2
+const C2_GLASS_V = 2 + 4/8;   // Glass Vertical      = Handle  - 2"4
+const C2_GLASS_H = 0 + 4/8;   // Glass Horizontal    = TopBot  + 0"4
+
+// ── 3 TRACK formulas ──
+const C3_HANDLE  = 1 + 4/8;   // Handle & Interlock  = Height  - 1"4
+const C3_TOPBOT  = 7 + 4/8;   // Top & Bottom Rail   = (Length - 7"4) ÷ 3
+const C3_GLASS_V = 2 + 4/8;   // Glass Vertical      = Handle  - 2"4
+const C3_GLASS_H = 0 + 4/8;   // Glass Horizontal    = TopBot  + 0"4
+
+
+/* =====================================================
+   5. SP BUTTON VALUES — do not change
+   ===================================================== */
+const SP_VALS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8];
+const SP_LBLS = ['0','½','1','1½','2','2½','3','3½','4','4½','5','5½','6','6½','7','7½','8'];
+const SP_FRAC = {
+  0:'',   0.5:'½',  1:'1',  1.5:'1½',
+  2:'2',  2.5:'2½', 3:'3',  3.5:'3½',
+  4:'4',  4.5:'4½', 5:'5',  5.5:'5½',
+  6:'6',  6.5:'6½', 7:'7',  7.5:'7½', 8:''
+};
+
+
+/* =====================================================
+   6. APP LOGIC — no need to change below this line
+   ===================================================== */
+
+let sel        = { len: 0, hgt: 0 };
+let activeDim  = 'len';
+let trackType  = 2;
+
+// ── Track selector ──
+function setTrack(t) {
+  trackType = t;
+  document.getElementById('btn-2track').className = 'track-btn' + (t === 2 ? ' active' : '');
+  document.getElementById('btn-3track').className = 'track-btn' + (t === 3 ? ' active' : '');
+
+  if (t === 2) {
+    document.getElementById('lf-topbot').textContent           = '= (Length − 6"2) ÷ 2';
+    document.getElementById('ln-track-bottom-name').textContent = '2 Track Bottom';
+    document.getElementById('ln-track-top-name').textContent    = '2 Track Top';
+    document.getElementById('ln-track-side-name').textContent   = '2 Track Side';
+    document.getElementById('lc-panel-count').textContent       = '× 2 panels';
+    document.getElementById('lc-glass-count').textContent       = '2 pcs total';
+  } else {
+    document.getElementById('lf-topbot').textContent           = '= (Length − 7"4) ÷ 3';
+    document.getElementById('ln-track-bottom-name').textContent = '3 Track Bottom';
+    document.getElementById('ln-track-top-name').textContent    = '3 Track Top';
+    document.getElementById('ln-track-side-name').textContent   = '3 Track Side';
+    document.getElementById('lc-panel-count').textContent       = '× 3 panels';
+    document.getElementById('lc-glass-count').textContent       = '3 pcs total';
+  }
+}
+
+// ── SP grid ──
+function setActiveDim(dim) {
+  activeDim = dim;
+  const lbl = dim === 'len' ? 'Length SP' : 'Height SP';
+  document.getElementById('sp-active-lbl').textContent = 'Setting: ' + lbl + '  (1 SP = ⅛")';
+  buildGrid();
+}
+
+function buildGrid() {
+  const g = document.getElementById('shared-grid');
+  g.innerHTML = '';
+  SP_VALS.forEach((v, i) => {
+    const b = document.createElement('div');
+    b.className = 'sp-btn' + (v === 0 ? ' zero' : '') + (sel[activeDim] === v ? ' on' : '');
+    b.innerHTML = SP_LBLS[i];
+    b.onclick = () => {
+      sel[activeDim] = v;
+      updateShow('len');
+      updateShow('hgt');
+      buildGrid();
+    };
+    g.appendChild(b);
+  });
+}
+
+function updateShow(dim) {
+  const i = SP_VALS.indexOf(sel[dim]);
+  document.getElementById(dim + '-sp-show').textContent = SP_LBLS[i] + ' sp';
+}
+
+// ── Format decimal → inch"sp string ──
+function fmt(dec) {
+  const r    = Math.round(dec * 16) / 16;
+  let inch   = Math.floor(r);
+  let sp     = Math.round((r - inch) * SP_PER_INCH * 10) / 10;
+  if (sp >= SP_PER_INCH) { inch++; sp = 0; }
+  const spStr = SP_FRAC[sp] !== undefined ? SP_FRAC[sp] : sp.toString();
+  return spStr ? inch + '" ' + spStr : inch + '"';
+}
+
+function setL(id, val) {
+  document.getElementById(id).textContent = fmt(val);
+}
+
+// ── Calculate ──
+function calculate() {
+  const L = (parseFloat(document.getElementById('len-in').value) || 0) + sel.len / SP_PER_INCH;
+  const H = (parseFloat(document.getElementById('hgt-in').value) || 0) + sel.hgt / SP_PER_INCH;
+
+  if (L <= 0 || H <= 0) { alert('Please enter Length and Height.'); return; }
+
+  let trackBottom, trackTopL, trackTopH, topBottom, handle, interlock, glassV, glassH, panels;
+
+  if (trackType === 2) {
+    if (L <= C2_TOPBOT) { alert('Length must be greater than 6"2 for 2 Track.'); return; }
+    panels      = 2;
+    trackBottom = L;
+    trackTopL   = L;
+    trackTopH   = H;
+    topBottom   = (L - C2_TOPBOT) / 2;
+    handle      = H - C2_HANDLE;
+    interlock   = H - C2_HANDLE;
+    glassV      = handle   - C2_GLASS_V;
+    glassH      = topBottom + C2_GLASS_H;
+
+  } else {
+    if (L <= C3_TOPBOT) { alert('Length must be greater than 7"4 for 3 Track.'); return; }
+    panels      = 3;
+    trackBottom = L;
+    trackTopL   = L;
+    trackTopH   = H;
+    topBottom   = (L - C3_TOPBOT) / 3;
+    handle      = H - C3_HANDLE;
+    interlock   = H - C3_HANDLE;
+    glassV      = handle    - C3_GLASS_V;
+    glassH      = topBottom + C3_GLASS_H;
+  }
+
+  // Fill summary bar
+  document.getElementById('s-len').textContent    = fmt(L);
+  document.getElementById('s-hgt').textContent    = fmt(H);
+  document.getElementById('s-track').textContent  = trackType + 'T';
+  document.getElementById('s-panels').textContent = panels;
+
+  // Fill profile list
+  setL('l-tb',     trackBottom);
+  setL('l-ttl',    trackTopL);
+  setL('l-tth',    trackTopH);
+  setL('l-tb2',    topBottom);
+  setL('l-handle', handle);
+  setL('l-intlk',  interlock);
+  setL('l-gv',     glassV);
+  setL('l-gh',     glassH);
+
+  // Fill final size table
+  document.getElementById('fs-frame-h').textContent = fmt(L);
+  document.getElementById('fs-frame-v').textContent = fmt(H);
+  document.getElementById('fs-panel-h').textContent = fmt(topBottom);
+  document.getElementById('fs-panel-v').textContent = fmt(handle);
+  document.getElementById('fs-glass-h').textContent = fmt(glassH);
+  document.getElementById('fs-glass-v').textContent = fmt(glassV);
+
+  // Show results
+  const res = document.getElementById('results');
+  res.classList.add('show');
+
+  // Save current calc for all save features
+  currentCalc = { L, H, trackType, panels, trackBottom, trackTopL, trackTopH,
+                  topBottom, handle, interlock, glassV, glassH };
+  saveToHistory(currentCalc);
+  document.getElementById('save-options').style.display = 'block';
+  document.getElementById('history-section').style.display = 'none';
+
+  // Reset Add to PDF button for new calculation
+  const addBtn = document.getElementById('btn-add-pdf');
+  addBtn.innerHTML = '➕ Add to PDF Queue';
+  addBtn.classList.remove('added');
+  addBtn.disabled = false;
+
+  setTimeout(() => res.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+// ── Clear all ──
+function clearAll() {
+  document.getElementById('len-in').value = '';
+  document.getElementById('hgt-in').value = '';
+  sel       = { len: 0, hgt: 0 };
+  activeDim = 'len';
+  updateShow('len');
+  updateShow('hgt');
+  setActiveDim('len');
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('save-options').style.display = 'none';
+  document.getElementById('history-section').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Switch between Profile List and Final Size ──
+function switchView(v) {
+  document.getElementById('view-list').classList.toggle('show',    v === 'list');
+  document.getElementById('view-diagram').classList.toggle('show', v === 'diagram');
+  document.querySelectorAll('.view-btn').forEach((b, i) =>
+    b.classList.toggle('active', ['list', 'diagram'][i] === v));
+}
+
+// ── Download helpers — captures Summary + Profile List + Final Size together ──
+function captureFullResults(filename) {
+  const listEl    = document.getElementById('view-list');
+  const diagEl    = document.getElementById('view-diagram');
+  const toggleEl  = document.getElementById('view-toggle-bar');
+
+  // Hide buttons during capture
+  const dlBtns = document.querySelectorAll('.dl-btn, .dl-btn2');
+  dlBtns.forEach(b => b.style.display = 'none');
+
+  // Force both views visible for capture
+  listEl.style.display  = 'block';
+  diagEl.style.display  = 'block';
+  if (toggleEl) toggleEl.style.display = 'none';
+
+  const captureEl = document.getElementById('results');
+
+  html2canvas(captureEl, { scale: 3, backgroundColor: '#111111', useCORS: true }).then(canvas => {
+    // Restore everything
+    listEl.style.display  = '';
+    diagEl.style.display  = '';
+    if (toggleEl) toggleEl.style.display = '';
+    dlBtns.forEach(b => b.style.display = '');
+
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('✅ Image saved!');
+  });
+}
+
+function downloadList()      { captureFullResults('window-profiles.png'); }
+function downloadFinalSize() { captureFullResults('window-final-size.png'); }
+
+// ── Initialize ──
+buildGrid();
+
+/* =====================================================
+   8. MULTI-PAGE PDF QUEUE
+   ===================================================== */
+
+let pdfQueue = [];  // { img, label, trackType, panels }
+
+// ── Add current result to PDF queue ──
+function addToPdfQueue() {
+  if (!currentCalc) return;
+
+  const btn      = document.getElementById('btn-add-pdf');
+  const listEl   = document.getElementById('view-list');
+  const diagEl   = document.getElementById('view-diagram');
+  const toggleEl = document.getElementById('view-toggle-bar');
+  const dlBtns   = document.querySelectorAll('.dl-btn, .dl-btn2');
+  const addBtn   = document.getElementById('btn-add-pdf');
+
+  dlBtns.forEach(b => b.style.display = 'none');
+  addBtn.style.display      = 'none';
+  listEl.style.display      = 'block';
+  diagEl.style.display      = 'block';
+  if (toggleEl) toggleEl.style.display = 'none';
+
+  btn.innerHTML = '⏳ Adding...';
+  btn.disabled  = true;
+
+  html2canvas(document.getElementById('results'), {
+    scale: 3, backgroundColor: '#111111', useCORS: true
+  }).then(canvas => {
+    listEl.style.display  = '';
+    diagEl.style.display  = '';
+    if (toggleEl) toggleEl.style.display = '';
+    dlBtns.forEach(b => b.style.display = '');
+    addBtn.style.display  = '';
+
+    const c = currentCalc;
+    pdfQueue.push({
+      img      : canvas.toDataURL('image/png'),
+      label    : fmt(c.L) + ' × ' + fmt(c.H),
+      trackType: c.trackType,
+      panels   : c.panels
+    });
+
+    btn.innerHTML = '✅ Added to Queue (' + pdfQueue.length + ')';
+    btn.classList.add('added');
+    btn.disabled  = false;
+
+    renderQueuePanel();
+    showToast('✅ Added! ' + pdfQueue.length + ' page(s) in queue');
+
+    // Scroll to queue
+    setTimeout(() => {
+      document.getElementById('queue-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+  });
+}
+
+// ── Render queue panel ──
+function renderQueuePanel() {
+  const sec  = document.getElementById('queue-section');
+  const list = document.getElementById('queue-list');
+  const cnt  = document.getElementById('q-count');
+  const btn  = document.getElementById('queue-generate-btn');
+
+  sec.classList.toggle('show', pdfQueue.length > 0);
+  cnt.textContent = pdfQueue.length + (pdfQueue.length === 1 ? ' page' : ' pages');
+  btn.textContent = '🖨️ Generate PDF (' + pdfQueue.length + ' pages)';
+  btn.disabled    = pdfQueue.length === 0;
+
+  if (pdfQueue.length === 0) {
+    list.innerHTML = '<div class="queue-empty">No items in queue.</div>';
+    return;
+  }
+
+  list.innerHTML = pdfQueue.map((p, i) => `
+    <div class="queue-item" id="qi-${i}">
+      <div class="qi-left">
+        <div class="qi-num">${i + 1}</div>
+        <div class="qi-info">
+          <div class="qi-size">${p.label}</div>
+          <div class="qi-track">${p.trackType} Track  •  ${p.panels} Panels</div>
+        </div>
+      </div>
+      <button class="qi-remove" onclick="removeFromQueue(${i})">✕ Remove</button>
+    </div>`).join('');
+}
+
+// ── Remove one item from queue ──
+function removeFromQueue(i) {
+  pdfQueue.splice(i, 1);
+  renderQueuePanel();
+  showToast('🗑️ Removed from queue');
+
+  // If current calc was this one, reset add button
+  const btn = document.getElementById('btn-add-pdf');
+  if (btn && btn.classList.contains('added')) {
+    btn.innerHTML = '➕ Add to PDF Queue';
+    btn.classList.remove('added');
+    btn.disabled  = false;
+  }
+}
+
+// ── Clear entire queue ──
+function clearPdfQueue() {
+  pdfQueue = [];
+  renderQueuePanel();
+  const btn = document.getElementById('btn-add-pdf');
+  if (btn) { btn.innerHTML = '➕ Add to PDF Queue'; btn.classList.remove('added'); btn.disabled = false; }
+  showToast('🗑️ PDF queue cleared');
+}
+
+// ── Generate multi-page PDF ──
+function generateMultiPDF() {
+  if (pdfQueue.length === 0) { showToast('No pages in queue!'); return; }
+
+  const pages = pdfQueue.map((p, i) => `
+    <div class="page" style="page-break-after:${i < pdfQueue.length - 1 ? 'always' : 'auto'}">
+      <div class="pg-header">
+        <span>🪟 ANKIT ALUMINIUM & GLASS WORKS</span>
+        <span class="pg-info">${p.label}  |  ${p.trackType} Track  •  ${p.panels} Panels</span>
+      </div>
+      <div class="img-wrap"><img src="${p.img}"></div>
+      <div class="pg-footer">ankborkar024@gmail.com  |  +91 70570 22805  |  Nagpur  |  Page ${i+1} of ${pdfQueue.length}</div>
+    </div>`).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>Window Calculations — ${pdfQueue.length} pages</title>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:system-ui; background:#fff; }
+      .page { display:flex; flex-direction:column; height:100vh; }
+      .pg-header { background:#6B7040; color:#fff; padding:10px 18px;
+        display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+      .pg-header span { font-size:13px; font-weight:700; }
+      .pg-info { font-size:11px; opacity:0.85; }
+      .img-wrap { flex:1; overflow:hidden; }
+      .img-wrap img { width:100%; height:100%; object-fit:contain; object-position:top; display:block; }
+      .pg-footer { background:#4A4D2A; color:#D4C9A8; font-size:10px;
+        padding:7px 18px; text-align:center; flex-shrink:0; }
+      .print-btn { display:block; margin:16px auto; padding:12px 32px;
+        background:#6B7040; color:#fff; border:none; border-radius:10px;
+        font-size:15px; font-weight:700; cursor:pointer; }
+      @media print {
+        .print-btn { display:none !important; }
+        body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        @page { margin:0; size:A4 portrait; }
+        .page { height:100vh; }
+      }
+    </style></head>
+    <body>
+      ${pages}
+      <button class="print-btn" onclick="window.print()">
+        🖨️ Print / Save as PDF (${pdfQueue.length} pages)
+      </button>
+    </body></html>`);
+  win.document.close();
+}
+
+// Current calculation data
+let currentCalc = null;
+
+// ── Toast notification ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Build plain text summary ──
+function buildText() {
+  if (!currentCalc) return '';
+  const c = currentCalc;
+  return `🪟 ANKIT ALUMINIUM & GLASS WORKS
+━━━━━━━━━━━━━━━━━━━━━
+📐 Frame: ${fmt(c.L)} × ${fmt(c.H)}  |  ${c.trackType} Track  |  ${c.panels} Panels
+
+🔩 FRAME PROFILES
+  Track Bottom  : ${fmt(c.trackBottom)}  (1 pc)
+  Track Top     : ${fmt(c.trackTopL)}   (1 pc)
+  Track Side    : ${fmt(c.trackTopH)}   (2 pcs)
+
+🪟 PANEL PROFILES (× ${c.panels} panels)
+  Top & Bottom  : ${fmt(c.topBottom)}  (2 pcs each)
+  Handle        : ${fmt(c.handle)}   (1 pc each)
+  Interlock     : ${fmt(c.interlock)}   (1 pc each)
+
+🔲 GLASS SIZE (× ${c.panels} pcs)
+  Vertical      : ${fmt(c.glassV)}
+  Horizontal    : ${fmt(c.glassH)}
+━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+// ── 1. WhatsApp Share ──
+function shareWhatsApp() {
+  const text = encodeURIComponent(buildText());
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+// ── 2. Copy to Clipboard ──
+function copyToClipboard() {
+  const text = buildText();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('✅ Copied to clipboard!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ Copied to clipboard!');
+  }
+}
+
+// ── 3. Save as PDF ──
+function savePDF() {
+  const listEl   = document.getElementById('view-list');
+  const diagEl   = document.getElementById('view-diagram');
+  const toggleEl = document.getElementById('view-toggle-bar');
+  const dlBtns   = document.querySelectorAll('.dl-btn, .dl-btn2');
+
+  // Hide buttons, show both views
+  dlBtns.forEach(b => b.style.display = 'none');
+  listEl.style.display  = 'block';
+  diagEl.style.display  = 'block';
+  if (toggleEl) toggleEl.style.display = 'none';
+
+  const el = document.getElementById('results');
+  html2canvas(el, { scale: 3, backgroundColor: '#111111', useCORS: true }).then(canvas => {
+    // Restore
+    listEl.style.display  = '';
+    diagEl.style.display  = '';
+    if (toggleEl) toggleEl.style.display = '';
+    dlBtns.forEach(b => b.style.display = '');
+
+    const img = canvas.toDataURL('image/png');
+    const c   = currentCalc;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>Window Calc — ${fmt(c.L)} × ${fmt(c.H)}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui; background: #fff; }
+        .header { background: #6B7040; color: white; padding: 14px 20px; }
+        .header h2 { font-size: 15px; margin: 0; }
+        .header p  { font-size: 11px; margin: 3px 0 0; opacity: 0.8; }
+        .img-wrap { width: 100%; }
+        .img-wrap img { width: 100%; display: block; }
+        .footer { background: #4A4D2A; color: #D4C9A8; font-size: 10px;
+          padding: 8px 20px; text-align: center; }
+        .print-btn { display: block; margin: 12px auto; padding: 10px 28px;
+          background: #6B7040; color: white; border: none; border-radius: 10px;
+          font-size: 14px; font-weight: 700; cursor: pointer; }
+        @media print {
+          .print-btn { display: none; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { margin: 0; size: A4 portrait; }
+          .page-wrap { height: 100vh; display: flex; flex-direction: column; }
+          .img-wrap { flex: 1; overflow: hidden; }
+          .img-wrap img { width: 100%; height: 100%; object-fit: contain; object-position: top; }
+        }
+      </style></head>
+      <body>
+        <div class="page-wrap">
+          <div class="header">
+            <h2>🪟 ANKIT ALUMINIUM & GLASS WORKS</h2>
+            <p>Frame: ${fmt(c.L)} × ${fmt(c.H)}  |  ${c.trackType} Track  |  ${c.panels} Panels</p>
+          </div>
+          <div class="img-wrap"><img src="${img}"></div>
+          <div class="footer">ankborkar024@gmail.com  |  +91 70570 22805  |  Nagpur</div>
+        </div>
+        <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+      </body></html>`);
+    win.document.close();
+  });
+}
+
+// ── 4. History ──
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('windowCalcHistory') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveToHistory(calc) {
+  let history = loadHistory();
+  history.unshift({ ...calc, time: new Date().toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' }) });
+  if (history.length > 10) history = history.slice(0, 10);
+  localStorage.setItem('windowCalcHistory', JSON.stringify(history));
+}
+
+function showHistory() {
+  const sec  = document.getElementById('history-section');
+  const list = document.getElementById('history-list');
+  const history = loadHistory();
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (history.length === 0) {
+    list.innerHTML = '<div class="history-empty">No calculations saved yet.</div>';
+    return;
+  }
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="reloadCalc(${i})">
+      <div class="hi-left">
+        <div class="hi-size">${fmt(h.L)} × ${fmt(h.H)}</div>
+        <div class="hi-track">${h.trackType} Track  •  ${h.panels} Panels</div>
+        <div class="hi-time">${h.time}</div>
+      </div>
+      <div class="hi-arrow">▶</div>
+    </div>`).join('');
+}
+
+function reloadCalc(i) {
+  const h = loadHistory()[i];
+  if (!h) return;
+  currentCalc = h;
+  fillResults(h);
+  document.getElementById('results').classList.add('show');
+  document.getElementById('save-options').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showToast('✅ Loaded from history!');
+}
+
+function clearHistory() {
+  localStorage.removeItem('windowCalcHistory');
+  showHistory();
+  showToast('🗑️ History cleared');
+}
+
+function fillResults(c) {
+  document.getElementById('s-len').textContent    = fmt(c.L);
+  document.getElementById('s-hgt').textContent    = fmt(c.H);
+  document.getElementById('s-track').textContent  = c.trackType + 'T';
+  document.getElementById('s-panels').textContent = c.panels;
+  setL('l-tb',     c.trackBottom);
+  setL('l-ttl',    c.trackTopL);
+  setL('l-tth',    c.trackTopH);
+  setL('l-tb2',    c.topBottom);
+  setL('l-handle', c.handle);
+  setL('l-intlk',  c.interlock);
+  setL('l-gv',     c.glassV);
+  setL('l-gh',     c.glassH);
+  document.getElementById('fs-frame-h').textContent = fmt(c.L);
+  document.getElementById('fs-frame-v').textContent = fmt(c.H);
+  document.getElementById('fs-panel-h').textContent = fmt(c.topBottom);
+  document.getElementById('fs-panel-v').textContent = fmt(c.handle);
+  document.getElementById('fs-glass-h').textContent = fmt(c.glassH);
+  document.getElementById('fs-glass-v').textContent = fmt(c.glassV);
+}
+
+</script>
+</body>
+</html>
